@@ -8,13 +8,16 @@ public enum TokenType
     String,
     Operator,
     Punctuation,
-    Eof,
+    Eof
 }
 
-public record Token(TokenType Type, string Value, int Position)
+public record Token(TokenType Type, string Lexeme, int StartPosition, int EndPosition)
 {
+    public int Length => EndPosition - StartPosition + 1;
     public override string ToString()
     {
-        return $"{Type}({Value}) at {Position}";
+        if (Lexeme.Length <= 1) 
+            return $"{Type}({Lexeme}) {StartPosition}";
+        return $"{Type}({Lexeme}) at {StartPosition}-{EndPosition}";
     }
 }

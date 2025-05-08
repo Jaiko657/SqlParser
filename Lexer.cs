@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 
 namespace SqlParser;
 
@@ -8,20 +9,21 @@ public class Lexer
     private int _position;
     private char _currentChar;
 
-    private static readonly HashSet<string> Keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> Keywords = new(StringComparer.OrdinalIgnoreCase)
     {
         "SELECT", "FROM", "WHERE", "AND", "OR", "INSERT", "UPDATE", "DELETE",
         "JOIN", "ON", "GROUP", "BY", "HAVING", "ORDER", "LIMIT", "OFFSET",
         "AS", "INTO", "VALUES", "SET", "LEFT", "RIGHT", "INNER", "OUTER", "FULL",
-        "UNION", "ALL", "DISTINCT", "TOP", "PERCENT", "WITH"
-    };
+        "UNION", "ALL", "DISTINCT", "TOP", "PERCENT", "WITH",
+        "INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "FULL JOIN", "LEFT OUTER JOIN", "RIGHT OUTER JOIN", "CROSS JOIN"
+    }; //TODO: There are more keywords
 
-    private static readonly HashSet<string> Operators = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> Operators = new(StringComparer.OrdinalIgnoreCase)
     {
         "=", "<", ">", "<=", ">=", "<>", "!=",
         "LIKE", "IN", "BETWEEN", "IS", "NOT", "NULL",
         "+", "-", "*", "/", "%", "||"
-    };
+    }; //TODO: There are more operators, or some may be better treated as keywords
 
     public Lexer(string input)
     {
@@ -45,6 +47,14 @@ public class Lexer
             Advance();
     }
 
+    private Token CreateToken(TokenType type, string value, int startPosition)
+    {
+        Debug.Assert(startPosition >= 0);
+        if (type == TokenType.Eof) return new Token(type, value, startPosition, startPosition);
+        if (type == TokenType.Keyword) return new Token(type, value.ToUpper(), startPosition, startPosition + value.Length - 1);
+        return new Token(type, value, startPosition, startPosition + value.Length - 1);
+    }
+
     private Token ReadNumber()
     {
         var result = new StringBuilder();
@@ -62,7 +72,7 @@ public class Lexer
             result.Append(_currentChar);
             Advance();
         }
-        return new Token(TokenType.Number, result.ToString(), start);
+        return CreateToken(TokenType.Number, result.ToString(), start);
     }
 
     private Token ReadIdentifierOrKeyword()
@@ -79,12 +89,36 @@ public class Lexer
         string word = result.ToString();
 
         if (Keywords.Contains(word, StringComparer.OrdinalIgnoreCase))
-            return new Token(TokenType.Keyword, word, start);
+        {
+            Token multiWordKeyword = TryReadMultiWordKeyword(word, start);
+            return multiWordKeyword ?? CreateToken(TokenType.Keyword, word, start);
+        }
         
         if (Operators.Contains(word, StringComparer.OrdinalIgnoreCase))
-            return new Token(TokenType.Operator, word, start);
+            return CreateToken(TokenType.Operator, word, start);
 
-        return new Token(TokenType.Identifier, word, start);
+        return CreateToken(TokenType.Identifier, word, start);
+    }
+
+    private Token TryReadMultiWordKeyword(string firstWord, int start)
+    {
+        int savedPosition = _position;
+        char savedChar = _currentChar;
+
+        SkipWhitespace();
+        Token nextWord = ReadIdentifierOrKeyword();
+
+        if (nextWord.Type == TokenType.Keyword)
+        {
+            string combinedKeyword = $"{firstWord} {nextWord.Lexeme}".ToUpper();;
+            if (Keywords.Contains(combinedKeyword, StringComparer.OrdinalIgnoreCase))
+                return CreateToken(TokenType.Keyword, combinedKeyword, start);
+        }
+
+        // Restore position if it's not a multi-word keyword
+        _position = savedPosition;
+        _currentChar = savedChar;
+        return null;
     }
 
     private Token ReadString()
@@ -108,7 +142,7 @@ public class Lexer
             Advance();
         else
             throw new Exception("Unterminated string literal");
-        return new Token(TokenType.String, result.ToString(), start);
+        return CreateToken(TokenType.String, result.ToString(), start);
     }
 
     private Token ReadOperator()
@@ -125,7 +159,7 @@ public class Lexer
         string op = result.ToString();
 
         if (Operators.Contains(op, StringComparer.OrdinalIgnoreCase))
-            return new Token(TokenType.Operator, op, start);
+            return CreateToken(TokenType.Operator, op, start);
 
         throw new Exception($"Invalid operator: {op}");
     }
@@ -135,7 +169,7 @@ public class Lexer
         var punctuation = _currentChar.ToString();
         var start = _position;
         Advance();
-        return new Token(TokenType.Punctuation, punctuation, start);
+        return CreateToken(TokenType.Punctuation, punctuation, start);
     }
 
     public Token GetNextToken()
@@ -162,6 +196,7 @@ public class Lexer
 
             switch (_currentChar)
             {
+                case '.':
                 case ',':
                 case ';':
                 case '(':
@@ -179,6 +214,20 @@ public class Lexer
             }
         }
 
-        return new Token(TokenType.Eof, "", _position);
+        return CreateToken(TokenType.Eof, "", _position);
+    }
+
+    public List<Token> GetAllTokens()
+    {
+        if(_position != 0)
+            throw new Exception("Lexer has already been used. Create a new instance.");
+        var tokens = new List<Token>();
+        Token token;
+        do
+        {
+            token = GetNextToken();
+            tokens.Add(token);
+        } while (token.Type != TokenType.Eof);
+        return tokens;
     }
 }
