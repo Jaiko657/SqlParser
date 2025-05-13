@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlParser", "src/SqlParser.csproj", "{4E937021-5F3C-422F-A9FF-89FF72450DB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlParserTests", "test\SqlParserTests.csproj", "{29E73A59-6D48-4FA1-A7F6-C3A6BED6CFBA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4E937021-5F3C-422F-A9FF-89FF72450DB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E937021-5F3C-422F-A9FF-89FF72450DB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E937021-5F3C-422F-A9FF-89FF72450DB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E937021-5F3C-422F-A9FF-89FF72450DB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29E73A59-6D48-4FA1-A7F6-C3A6BED6CFBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29E73A59-6D48-4FA1-A7F6-C3A6BED6CFBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29E73A59-6D48-4FA1-A7F6-C3A6BED6CFBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29E73A59-6D48-4FA1-A7F6-C3A6BED6CFBA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

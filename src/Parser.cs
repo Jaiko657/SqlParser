@@ -124,6 +124,7 @@ public class Parser
             };
 
             var tableName = Advance().Lexeme;
+            Expect(TokenType.Identifier);
             var table = new TableNode(tableName);
             Advance();
             if(!Match(TokenType.Keyword, "ON") && Match(TokenType.Identifier))
@@ -136,7 +137,7 @@ public class Parser
             Advance(); // consume ON
             var condition = ParseJoinExpression();
 
-            joins.Add(new JoinNode(joinType, table, condition));
+            joins.Add(new JoinNode(joinType, table, condition).Balance());
         }
         return joins;
     }
@@ -300,7 +301,7 @@ public class Parser
                 Double.TryParse(num, out var number);
                 return new LiteralNode(number);
             default:
-                throw new Exception($"Couldnt Parse Token as Literal Node: {Current}");
+                throw new Exception($"Couldn't Parse Token as Literal Node: {Current}");
         }
     }
 
