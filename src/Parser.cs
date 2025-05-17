@@ -1,4 +1,4 @@
-﻿using System.Security.AccessControl;
+using System.Security.AccessControl;
 using Microsoft.VisualBasic.CompilerServices;
 
 namespace SqlParser;
@@ -72,7 +72,7 @@ public class Parser
 
     private SelectNode ParseSelectStatement()
     {
-        Advance(); //Skip SELECT
+        Advance(); // Skip SELECT
         var columns = ParseColumns();
         Expect(TokenType.Keyword, "FROM");
         Advance();
@@ -91,11 +91,16 @@ public class Parser
 
         var joins = ParseJoins();
         WhereNode? where = null;
+        if (Match(TokenType.Keyword, "WHERE"))
+        {
+            Advance();
+            where = new WhereNode(ParseJoinExpression()).Balance();
+        }
         GroupByNode? groupBy = null;
         HavingNode? having = null;
         OrderByNode? orderBy = null;
         LimitNode? limit = null;
-        
+
         return new SelectNode(
             Columns: columns,
             FromTable: fromTable,
@@ -111,7 +116,7 @@ public class Parser
     {
         IList<JoinNode> joins = [];
         while (Match(TokenType.Keyword, "JOIN", "INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "FULL JOIN", "LEFT OUTER JOIN",
-                   "RIGHT OUTER JOIN"))
+                   "RIGHT OUTER JOIN", "CROSS JOIN"))
         {
             var joinType = Current.Lexeme switch
             {
@@ -127,10 +132,17 @@ public class Parser
             Expect(TokenType.Identifier);
             var table = new TableNode(tableName);
             Advance();
-            if(!Match(TokenType.Keyword, "ON") && Match(TokenType.Identifier))
+            if (!Match(TokenType.Keyword, "ON") && Match(TokenType.Identifier))
             {
                 var alias = new AliasNode(Current.Lexeme);
                 table = table with { Alias = alias };
+                Advance(); // consume alias so next token is ON
+            }
+
+            if (joinType == JoinType.Cross)
+            {
+                joins.Add(new JoinNode(joinType, table, null));
+                continue;
             }
 
             Expect(TokenType.Keyword, "ON");
@@ -243,14 +255,14 @@ public class Parser
         if (Match(TokenType.Punctuation, "("))
         {
             Advance(); // Consume '('
-            var expr = new GroupedExpressionNode(ParseJoinExpression()); 
+            var expr = new GroupedExpressionNode(ParseJoinExpression());
             Expect(TokenType.Punctuation, ")");
             Advance(); // Consume ')'
             return expr;
         }
-        
+
         var leftColumn = ParseColumnReference();
-        
+
         var op = Current.Lexeme;
         Advance(); // Consume op
 

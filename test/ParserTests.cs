@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SqlParser;
 using System.Text;
 
@@ -210,5 +210,81 @@ public class ParserTests
         // Console.WriteLine($"SQL: {sql}");
         // Console.WriteLine(treeOutput);
         // Console.WriteLine("---------------------------");
+    }
+
+    [TestMethod]
+    public void TestSimpleWhere()
+    {
+        string sql = "SELECT * FROM table1 JOIN table2 ON id1 = id2 WHERE col = 1";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        Assert.IsInstanceOfType(sqlNode, typeof(SelectNode));
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.Where);
+        Assert.IsInstanceOfType(selectNode.Where.Condition, typeof(BinaryExpressionNode));
+        var cond = (BinaryExpressionNode)selectNode.Where.Condition;
+        Assert.AreEqual("=", cond.Operator);
+    }
+
+    [TestMethod]
+    public void TestWhereWithAndOrPrecedence()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a WHERE x = 1 OR y = 2 AND z = 3";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        Assert.IsInstanceOfType(sqlNode, typeof(SelectNode));
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.Where);
+        Assert.IsInstanceOfType(selectNode.Where.Condition, typeof(BinaryExpressionNode));
+        var top = (BinaryExpressionNode)selectNode.Where.Condition;
+        Assert.AreEqual("OR", top.Operator);
+        Assert.IsInstanceOfType(top.Right, typeof(BinaryExpressionNode));
+        Assert.AreEqual("AND", ((BinaryExpressionNode)top.Right).Operator);
+    }
+
+    [TestMethod]
+    public void TestWhereWithParentheses()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a WHERE (x = 1 OR y = 2) AND z = 3";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        Assert.IsInstanceOfType(sqlNode, typeof(SelectNode));
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.Where);
+        Assert.IsInstanceOfType(selectNode.Where.Condition, typeof(BinaryExpressionNode));
+        var top = (BinaryExpressionNode)selectNode.Where.Condition;
+        Assert.AreEqual("AND", top.Operator);
+        Assert.IsInstanceOfType(top.Left, typeof(GroupedExpressionNode));
+    }
+
+    [TestMethod]
+    public void TestWhereWithStringLiteral()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.id = u.id WHERE name = 'foo'";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        Assert.IsInstanceOfType(sqlNode, typeof(SelectNode));
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.Where);
+        Assert.IsInstanceOfType(selectNode.Where.Condition, typeof(BinaryExpressionNode));
+        var cond = (BinaryExpressionNode)selectNode.Where.Condition;
+        Assert.IsInstanceOfType(cond.Right, typeof(LiteralNode));
+        Assert.AreEqual("foo", ((LiteralNode)cond.Right).Value);
+    }
+
+    [TestMethod]
+    public void TestNoWhereWhenOnlyJoins()
+    {
+        string sql = "SELECT * FROM table1 JOIN table2 ON id1 = id2";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        Assert.IsInstanceOfType(sqlNode, typeof(SelectNode));
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNull(selectNode.Where);
     }
 }

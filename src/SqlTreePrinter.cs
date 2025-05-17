@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace SqlParser;
 
@@ -143,7 +143,7 @@ public class TreePrinter : ISqlNodeVisitor
         AppendLine($"JoinNode: {node.Type}");
         _depth++;
         Visit(node.Table);
-        Visit(node.Condition);
+        if (node.Condition != null) Visit(node.Condition);
         _depth--;
     }
 

@@ -1,4 +1,4 @@
-﻿namespace SqlParser;
+namespace SqlParser;
 
 public interface ISqlNodeVisitor
 {
@@ -45,7 +45,7 @@ public record WhereNode(
 public record JoinNode(
     JoinType Type,
     TableNode Table,
-    ExpressionNode Condition
+    ExpressionNode? Condition
 ) : Node;
 
 public enum JoinType

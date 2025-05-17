@@ -1,4 +1,4 @@
-﻿namespace SqlParser;
+namespace SqlParser;
 
 public class ExpressionBalancer
 {
@@ -129,6 +129,7 @@ public static class NodeExtensions
     
     public static JoinNode Balance(this JoinNode joinNode)
     {
+        if (joinNode.Condition == null) return joinNode;
         var balancer = new ExpressionBalancer(BalanceContext.Join);
         return joinNode with { Condition = balancer.Balance(joinNode.Condition) };
     }
