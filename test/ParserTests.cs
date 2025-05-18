@@ -287,4 +287,58 @@ public class ParserTests
         var selectNode = (SelectNode)sqlNode;
         Assert.IsNull(selectNode.Where);
     }
+
+    [TestMethod]
+    public void TestOrderBySingleColumn()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a ORDER BY col";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        Assert.IsInstanceOfType(sqlNode, typeof(SelectNode));
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.OrderBy);
+        Assert.AreEqual(1, selectNode.OrderBy.Items.Count);
+        Assert.AreEqual("col", selectNode.OrderBy.Items[0].Column.ColumnName);
+        Assert.AreEqual(SortDirection.Ascending, selectNode.OrderBy.Items[0].Direction);
+    }
+
+    [TestMethod]
+    public void TestOrderByDesc()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a ORDER BY col DESC";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.OrderBy);
+        Assert.AreEqual(1, selectNode.OrderBy.Items.Count);
+        Assert.AreEqual(SortDirection.Descending, selectNode.OrderBy.Items[0].Direction);
+    }
+
+    [TestMethod]
+    public void TestOrderByMultiple()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a ORDER BY a, b DESC, c ASC";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.OrderBy);
+        Assert.AreEqual(3, selectNode.OrderBy.Items.Count);
+        Assert.AreEqual(SortDirection.Ascending, selectNode.OrderBy.Items[0].Direction);
+        Assert.AreEqual(SortDirection.Descending, selectNode.OrderBy.Items[1].Direction);
+        Assert.AreEqual(SortDirection.Ascending, selectNode.OrderBy.Items[2].Direction);
+    }
+
+    [TestMethod]
+    public void TestNoOrderBy()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a WHERE x = 1";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNull(selectNode.OrderBy);
+    }
 }
