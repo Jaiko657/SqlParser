@@ -341,4 +341,41 @@ public class ParserTests
         var selectNode = (SelectNode)sqlNode;
         Assert.IsNull(selectNode.OrderBy);
     }
+
+    [TestMethod]
+    public void TestLimitOnly()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a LIMIT 10";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.Limit);
+        Assert.AreEqual(10, selectNode.Limit.Limit);
+        Assert.IsNull(selectNode.Limit.Offset);
+    }
+
+    [TestMethod]
+    public void TestLimitOffset()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a ORDER BY a LIMIT 5 OFFSET 20";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.Limit);
+        Assert.AreEqual(5, selectNode.Limit.Limit);
+        Assert.AreEqual(20, selectNode.Limit.Offset);
+    }
+
+    [TestMethod]
+    public void TestNoLimit()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a ORDER BY a";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNull(selectNode.Limit);
+    }
 }

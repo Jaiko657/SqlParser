@@ -26,7 +26,7 @@ public partial class Parser
         GroupByNode? groupBy = null;
         HavingNode? having = null;
         OrderByNode? orderBy = ParseOrderBy();
-        LimitNode? limit = null;
+        LimitNode? limit = ParseLimit();
 
         return new SelectNode(
             Columns: columns,
