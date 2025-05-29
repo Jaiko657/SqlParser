@@ -378,4 +378,133 @@ public class ParserTests
         var selectNode = (SelectNode)sqlNode;
         Assert.IsNull(selectNode.Limit);
     }
+
+    [TestMethod]
+    public void TestGroupByOnly()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a GROUP BY col";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.GroupBy);
+        Assert.AreEqual(1, selectNode.GroupBy.Columns.Count);
+        Assert.AreEqual("col", selectNode.GroupBy.Columns[0].ColumnName);
+        Assert.IsNull(selectNode.Having);
+    }
+
+    [TestMethod]
+    public void TestGroupByMultipleColumns()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a GROUP BY a, b, c";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.GroupBy);
+        Assert.AreEqual(3, selectNode.GroupBy.Columns.Count);
+        Assert.AreEqual("a", selectNode.GroupBy.Columns[0].ColumnName);
+        Assert.AreEqual("b", selectNode.GroupBy.Columns[1].ColumnName);
+        Assert.AreEqual("c", selectNode.GroupBy.Columns[2].ColumnName);
+    }
+
+    [TestMethod]
+    public void TestHavingOnly()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a HAVING cnt > 10";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNull(selectNode.GroupBy);
+        Assert.IsNotNull(selectNode.Having);
+        Assert.IsInstanceOfType(selectNode.Having.Condition, typeof(BinaryExpressionNode));
+        var cond = (BinaryExpressionNode)selectNode.Having.Condition;
+        Assert.AreEqual(">", cond.Operator);
+    }
+
+    [TestMethod]
+    public void TestHavingWithAndOrPrecedence()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a HAVING x = 1 OR y = 2 AND z = 3";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.Having);
+        var top = (BinaryExpressionNode)selectNode.Having.Condition;
+        Assert.AreEqual("OR", top.Operator);
+        Assert.IsInstanceOfType(top.Right, typeof(BinaryExpressionNode));
+        Assert.AreEqual("AND", ((BinaryExpressionNode)top.Right).Operator);
+    }
+
+    [TestMethod]
+    public void TestGroupByAndHaving()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a WHERE x = 1 GROUP BY a, b HAVING sum > 0 ORDER BY a LIMIT 5";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNotNull(selectNode.Where);
+        Assert.IsNotNull(selectNode.GroupBy);
+        Assert.AreEqual(2, selectNode.GroupBy.Columns.Count);
+        Assert.IsNotNull(selectNode.Having);
+        Assert.IsInstanceOfType(selectNode.Having.Condition, typeof(BinaryExpressionNode));
+        Assert.AreEqual(">", ((BinaryExpressionNode)selectNode.Having.Condition).Operator);
+        Assert.IsNotNull(selectNode.OrderBy);
+        Assert.IsNotNull(selectNode.Limit);
+        Assert.AreEqual(5, selectNode.Limit.Limit);
+    }
+
+    [TestMethod]
+    public void TestNoGroupByOrHaving()
+    {
+        string sql = "SELECT * FROM t JOIN u ON t.a = u.a ORDER BY a";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.IsNull(selectNode.GroupBy);
+        Assert.IsNull(selectNode.Having);
+    }
+
+    [TestMethod]
+    public void TestDeleteNoWhere()
+    {
+        string sql = "DELETE FROM t";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        Assert.IsInstanceOfType(sqlNode, typeof(DeleteNode));
+        var deleteNode = (DeleteNode)sqlNode;
+        Assert.AreEqual("t", deleteNode.Table.TableName);
+        Assert.IsNull(deleteNode.Where);
+    }
+
+    [TestMethod]
+    public void TestDeleteWithWhere()
+    {
+        string sql = "DELETE FROM t WHERE id = 1";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var deleteNode = (DeleteNode)sqlNode;
+        Assert.IsNotNull(deleteNode.Where);
+        Assert.IsInstanceOfType(deleteNode.Where.Condition, typeof(BinaryExpressionNode));
+        Assert.AreEqual("=", ((BinaryExpressionNode)deleteNode.Where.Condition).Operator);
+    }
+
+    [TestMethod]
+    public void TestDeleteWithTableAlias()
+    {
+        string sql = "DELETE FROM schema.tbl t WHERE t.id = 0";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var deleteNode = (DeleteNode)sqlNode;
+        Assert.AreEqual("schema.tbl", deleteNode.Table.TableName);
+        Assert.IsNotNull(deleteNode.Table.Alias);
+        Assert.AreEqual("t", deleteNode.Table.Alias.AliasName);
+    }
 }

@@ -118,3 +118,8 @@ public record UnionNode(
     SelectNode Right,
     bool IsUnionAll = false
 ) : Node;
+
+public record DeleteNode(
+    TableNode Table,
+    WhereNode? Where = null
+) : Node;

@@ -76,6 +76,9 @@ public class TreePrinter : ISqlNodeVisitor
             case UnionNode unionNode:
                 PrintUnionNode(unionNode);
                 break;
+            case DeleteNode deleteNode:
+                PrintDeleteNode(deleteNode);
+                break;
             default:
                 AppendLine($"Unknown node type: {node.GetType().Name}");
                 break;
@@ -237,6 +240,15 @@ public class TreePrinter : ISqlNodeVisitor
         _depth++;
         Visit(node.Left);
         Visit(node.Right);
+        _depth--;
+    }
+
+    private void PrintDeleteNode(DeleteNode node)
+    {
+        AppendLine("DeleteNode");
+        _depth++;
+        Visit(node.Table);
+        if (node.Where != null) Visit(node.Where);
         _depth--;
     }
 
