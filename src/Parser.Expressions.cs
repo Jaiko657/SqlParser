@@ -68,4 +68,19 @@ public partial class Parser
     }
 
     private static bool IsValue(Token token) => token.Type is TokenType.String or TokenType.Number;
+
+    internal ExpressionNode ParsePrimaryExpression()
+    {
+        if (Match(TokenType.Punctuation, "("))
+        {
+            Advance(); // Consume '('
+            var expr = new GroupedExpressionNode(ParseJoinExpression());
+            Expect(TokenType.Punctuation, ")");
+            Advance(); // Consume ')'
+            return expr;
+        }
+        if (Current.Type == TokenType.String || Current.Type == TokenType.Number)
+            return ParseLiteral();
+        return ParseColumnReference();
+    }
 }

@@ -79,6 +79,12 @@ public class TreePrinter : ISqlNodeVisitor
             case DeleteNode deleteNode:
                 PrintDeleteNode(deleteNode);
                 break;
+            case UpdateNode updateNode:
+                PrintUpdateNode(updateNode);
+                break;
+            case UpdateSetItem updateSetItem:
+                PrintUpdateSetItem(updateSetItem);
+                break;
             default:
                 AppendLine($"Unknown node type: {node.GetType().Name}");
                 break;
@@ -249,6 +255,26 @@ public class TreePrinter : ISqlNodeVisitor
         _depth++;
         Visit(node.Table);
         if (node.Where != null) Visit(node.Where);
+        _depth--;
+    }
+
+    private void PrintUpdateNode(UpdateNode node)
+    {
+        AppendLine("UpdateNode");
+        _depth++;
+        Visit(node.Table);
+        foreach (var set in node.Sets)
+            Visit(set);
+        if (node.Where != null) Visit(node.Where);
+        _depth--;
+    }
+
+    private void PrintUpdateSetItem(UpdateSetItem node)
+    {
+        AppendLine("UpdateSetItem");
+        _depth++;
+        Visit(node.Column);
+        Visit(node.Value);
         _depth--;
     }
 

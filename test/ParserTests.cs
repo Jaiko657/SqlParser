@@ -507,4 +507,60 @@ public class ParserTests
         Assert.IsNotNull(deleteNode.Table.Alias);
         Assert.AreEqual("t", deleteNode.Table.Alias.AliasName);
     }
+
+    [TestMethod]
+    public void TestUpdateNoWhere()
+    {
+        string sql = "UPDATE t SET a = 1";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        Assert.IsInstanceOfType(sqlNode, typeof(UpdateNode));
+        var updateNode = (UpdateNode)sqlNode;
+        Assert.AreEqual("t", updateNode.Table.TableName);
+        Assert.AreEqual(1, updateNode.Sets.Count);
+        Assert.AreEqual("a", updateNode.Sets[0].Column.ColumnName);
+        Assert.IsInstanceOfType(updateNode.Sets[0].Value, typeof(LiteralNode));
+        Assert.IsNull(updateNode.Where);
+    }
+
+    [TestMethod]
+    public void TestUpdateMultipleSets()
+    {
+        string sql = "UPDATE t SET a = 1, b = 2, c = 'x'";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var updateNode = (UpdateNode)sqlNode;
+        Assert.AreEqual(3, updateNode.Sets.Count);
+        Assert.AreEqual("a", updateNode.Sets[0].Column.ColumnName);
+        Assert.AreEqual("b", updateNode.Sets[1].Column.ColumnName);
+        Assert.AreEqual("c", updateNode.Sets[2].Column.ColumnName);
+        Assert.AreEqual("x", ((LiteralNode)updateNode.Sets[2].Value).Value);
+    }
+
+    [TestMethod]
+    public void TestUpdateWithWhere()
+    {
+        string sql = "UPDATE t SET a = 1 WHERE id = 0";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var updateNode = (UpdateNode)sqlNode;
+        Assert.IsNotNull(updateNode.Where);
+        Assert.IsInstanceOfType(updateNode.Where.Condition, typeof(BinaryExpressionNode));
+        Assert.AreEqual("=", ((BinaryExpressionNode)updateNode.Where.Condition).Operator);
+    }
+
+    [TestMethod]
+    public void TestUpdateSetColumnRef()
+    {
+        string sql = "UPDATE t SET a = b";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var updateNode = (UpdateNode)sqlNode;
+        Assert.IsInstanceOfType(updateNode.Sets[0].Value, typeof(ColumnReferenceNode));
+        Assert.AreEqual("b", ((ColumnReferenceNode)updateNode.Sets[0].Value).ColumnName);
+    }
 }

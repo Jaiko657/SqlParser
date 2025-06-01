@@ -123,3 +123,14 @@ public record DeleteNode(
     TableNode Table,
     WhereNode? Where = null
 ) : Node;
+
+public record UpdateNode(
+    TableNode Table,
+    IReadOnlyList<UpdateSetItem> Sets,
+    WhereNode? Where = null
+) : Node;
+
+public record UpdateSetItem(
+    ColumnReferenceNode Column,
+    ExpressionNode Value
+) : Node;
