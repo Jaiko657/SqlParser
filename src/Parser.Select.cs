@@ -10,7 +10,7 @@ public partial class Parser
         Advance();
         var fromTable = ParseTable();
 
-        if (IsAtEnd())
+        if (IsAtEnd() || Current.Type == TokenType.Eof)
             return new SelectNode(Columns: columns, FromTable: fromTable, Joins: []);
 
         if (!Match(TokenType.Keyword))
@@ -23,8 +23,8 @@ public partial class Parser
             Advance();
             where = new WhereNode(ParseJoinExpression()).Balance();
         }
-        GroupByNode? groupBy = null;
-        HavingNode? having = null;
+        GroupByNode? groupBy = ParseGroupBy();
+        HavingNode? having = ParseHaving();
         OrderByNode? orderBy = ParseOrderBy();
         LimitNode? limit = ParseLimit();
 

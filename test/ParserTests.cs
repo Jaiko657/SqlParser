@@ -8,6 +8,71 @@ namespace SqlParserTests;
 public class ParserTests
 {
     [TestMethod]
+    public void TestMinimalSelectNoClauses()
+    {
+        string sql = "SELECT * FROM t";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        Assert.IsInstanceOfType(sqlNode, typeof(SelectNode));
+        var selectNode = (SelectNode)sqlNode;
+        Assert.AreEqual(1, selectNode.Columns.Count);
+        Assert.AreEqual("t", selectNode.FromTable.TableName);
+        Assert.AreEqual(0, selectNode.Joins.Count);
+        Assert.IsNull(selectNode.Where);
+    }
+
+    [TestMethod]
+    public void TestCrossJoin()
+    {
+        string sql = "SELECT * FROM t CROSS JOIN u";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.AreEqual(1, selectNode.Joins.Count);
+        Assert.AreEqual(JoinType.Cross, selectNode.Joins[0].Type);
+        Assert.IsNull(selectNode.Joins[0].Condition);
+    }
+
+    [TestMethod]
+    public void TestJoinTableWithAlias()
+    {
+        string sql = "SELECT * FROM t JOIN u ua ON t.id = ua.id";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var selectNode = (SelectNode)sqlNode;
+        Assert.AreEqual(1, selectNode.Joins.Count);
+        var joinTable = selectNode.Joins[0].Table;
+        Assert.IsNotNull(joinTable.Alias);
+        Assert.AreEqual("ua", joinTable.Alias.AliasName);
+    }
+
+    [TestMethod]
+    [ExpectedException(typeof(Exception))]
+    public void TestInvalidSqlThrows()
+    {
+        string sql = "SELECT FROM t";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        parser.Parse();
+    }
+
+    [TestMethod]
+    public void TestUpdateWithSchemaAndAlias()
+    {
+        string sql = "UPDATE schema.tbl t SET a = 1";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var updateNode = (UpdateNode)sqlNode;
+        Assert.AreEqual("schema.tbl", updateNode.Table.TableName);
+        Assert.IsNotNull(updateNode.Table.Alias);
+        Assert.AreEqual("t", updateNode.Table.Alias.AliasName);
+    }
+
+    [TestMethod]
     public void TestJoinWithAndPrecedenceOverOr()
     {
         // Test that AND has higher precedence than OR in join conditions

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text;
 
 namespace SqlParser;
@@ -13,7 +13,7 @@ public class Lexer
     {
         "SELECT", "FROM", "WHERE", "AND", "OR", "INSERT", "UPDATE", "DELETE",
         "JOIN", "ON", "GROUP", "BY", "HAVING", "ORDER", "LIMIT", "OFFSET",
-        "AS", "INTO", "VALUES", "SET", "LEFT", "RIGHT", "INNER", "OUTER", "FULL",
+        "AS", "INTO", "VALUES", "SET", "LEFT", "RIGHT", "INNER", "OUTER", "FULL", "CROSS",
         "UNION", "ALL", "DISTINCT", "TOP", "PERCENT", "WITH",
         "INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "FULL JOIN", "LEFT OUTER JOIN", "RIGHT OUTER JOIN", "CROSS JOIN"
     }; //TODO: There are more keywords
