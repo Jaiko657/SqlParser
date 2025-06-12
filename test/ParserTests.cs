@@ -628,4 +628,48 @@ public class ParserTests
         Assert.IsInstanceOfType(updateNode.Sets[0].Value, typeof(ColumnReferenceNode));
         Assert.AreEqual("b", ((ColumnReferenceNode)updateNode.Sets[0].Value).ColumnName);
     }
+
+    [TestMethod]
+    public void TestUnion()
+    {
+        string sql = "SELECT * FROM a JOIN b ON a.x = b.x UNION SELECT * FROM c";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        Assert.IsInstanceOfType(sqlNode, typeof(UnionNode));
+        var unionNode = (UnionNode)sqlNode;
+        Assert.IsFalse(unionNode.IsUnionAll);
+        Assert.IsInstanceOfType(unionNode.Left, typeof(SelectNode));
+        Assert.IsInstanceOfType(unionNode.Right, typeof(SelectNode));
+        Assert.AreEqual("b", ((SelectNode)unionNode.Left).Joins[0].Table.TableName);
+        Assert.AreEqual("c", ((SelectNode)unionNode.Right).FromTable.TableName);
+    }
+
+    [TestMethod]
+    public void TestUnionAll()
+    {
+        string sql = "SELECT * FROM t UNION ALL SELECT * FROM u";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var unionNode = (UnionNode)sqlNode;
+        Assert.IsTrue(unionNode.IsUnionAll);
+    }
+
+    [TestMethod]
+    public void TestChainedUnion()
+    {
+        string sql = "SELECT * FROM a UNION SELECT * FROM b UNION SELECT * FROM c";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        Assert.IsInstanceOfType(sqlNode, typeof(UnionNode));
+        var outer = (UnionNode)sqlNode;
+        Assert.IsInstanceOfType(outer.Left, typeof(UnionNode));
+        Assert.IsInstanceOfType(outer.Right, typeof(SelectNode));
+        var inner = (UnionNode)outer.Left;
+        Assert.AreEqual("c", ((SelectNode)outer.Right).FromTable.TableName);
+        Assert.AreEqual("b", ((SelectNode)inner.Right).FromTable.TableName);
+        Assert.AreEqual("a", ((SelectNode)inner.Left).FromTable.TableName);
+    }
 }

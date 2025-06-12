@@ -39,6 +39,20 @@ public partial class Parser
             Limit: limit);
     }
 
+    private Node ParseSelectOrUnion()
+    {
+        Node left = ParseSelectStatement();
+        while (Match(TokenType.Keyword, "UNION"))
+        {
+            Advance();
+            var isAll = Match(TokenType.Keyword, "ALL");
+            if (isAll) Advance();
+            var right = ParseSelectStatement();
+            left = new UnionNode(left, right, isAll);
+        }
+        return left;
+    }
+
     private IList<JoinNode> ParseJoins()
     {
         IList<JoinNode> joins = [];

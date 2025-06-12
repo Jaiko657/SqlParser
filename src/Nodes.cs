@@ -114,8 +114,8 @@ public record SubqueryNode(
 ) : ExpressionNode;
 
 public record UnionNode(
-    SelectNode Left,
-    SelectNode Right,
+    Node Left,
+    Node Right,
     bool IsUnionAll = false
 ) : Node;
 

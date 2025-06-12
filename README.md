@@ -15,11 +15,12 @@ A small SQL parser in C# that turns SQL text into an AST (lexer → tokens → p
 - **HAVING:** Same expression style as WHERE; AND/OR precedence and parentheses.
 - **ORDER BY:** Comma-separated column list, optional ASC/DESC per column (default ASC).
 - **LIMIT / OFFSET:** `LIMIT n` and optional `OFFSET m`.
+- **UNION / UNION ALL:** `SELECT ... UNION SELECT ...` and `UNION ALL`; chained unions build a left-nested tree.
 
 ## What it doesn’t do (planned)
 
 - **SELECT clauses:** (all main clauses parsed).
 - **Other statements:** INSERT.
-- **Advanced:** UNION/UNION ALL, subqueries, function calls (e.g. `COUNT(*)`), DISTINCT, TOP, WITH.
+- **Advanced:** subqueries, function calls (e.g. `COUNT(*)`), DISTINCT, TOP, WITH.
 
 See `docs/work_plan.md` for the full design spec and implementation order.

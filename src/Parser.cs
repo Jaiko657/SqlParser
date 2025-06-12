@@ -56,7 +56,7 @@ public partial class Parser
     private Node ParseStatement()
     {
         if (Match(TokenType.Keyword, "SELECT"))
-            return ParseSelectStatement();
+            return ParseSelectOrUnion();
         if (Match(TokenType.Keyword, "DELETE"))
             return ParseDeleteStatement();
         if (Match(TokenType.Keyword, "UPDATE"))
