@@ -672,4 +672,48 @@ public class ParserTests
         Assert.AreEqual("b", ((SelectNode)inner.Right).FromTable.TableName);
         Assert.AreEqual("a", ((SelectNode)inner.Left).FromTable.TableName);
     }
+
+    [TestMethod]
+    public void TestInsertNoColumns()
+    {
+        string sql = "INSERT INTO t VALUES (1, 'x')";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        Assert.IsInstanceOfType(sqlNode, typeof(InsertNode));
+        var insertNode = (InsertNode)sqlNode;
+        Assert.AreEqual("t", insertNode.Table.TableName);
+        Assert.IsNull(insertNode.ColumnNames);
+        Assert.AreEqual(2, insertNode.Values.Count);
+        Assert.AreEqual(1.0, ((LiteralNode)insertNode.Values[0]).Value);
+        Assert.AreEqual("x", ((LiteralNode)insertNode.Values[1]).Value);
+    }
+
+    [TestMethod]
+    public void TestInsertWithColumns()
+    {
+        string sql = "INSERT INTO t (a, b) VALUES (1, 2)";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var insertNode = (InsertNode)sqlNode;
+        Assert.IsNotNull(insertNode.ColumnNames);
+        Assert.AreEqual(2, insertNode.ColumnNames.Count);
+        Assert.AreEqual("a", insertNode.ColumnNames[0]);
+        Assert.AreEqual("b", insertNode.ColumnNames[1]);
+        Assert.AreEqual(2, insertNode.Values.Count);
+    }
+
+    [TestMethod]
+    public void TestInsertWithTableAlias()
+    {
+        string sql = "INSERT INTO schema.tbl t VALUES (1)";
+        var tokens = new Lexer(sql).GetAllTokens();
+        var parser = new Parser(tokens);
+        var sqlNode = parser.Parse();
+        var insertNode = (InsertNode)sqlNode;
+        Assert.AreEqual("schema.tbl", insertNode.Table.TableName);
+        Assert.IsNotNull(insertNode.Table.Alias);
+        Assert.AreEqual("t", insertNode.Table.Alias.AliasName);
+    }
 }

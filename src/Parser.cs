@@ -61,6 +61,8 @@ public partial class Parser
             return ParseDeleteStatement();
         if (Match(TokenType.Keyword, "UPDATE"))
             return ParseUpdateStatement();
+        if (Match(TokenType.Keyword, "INSERT"))
+            return ParseInsertStatement();
         throw new Exception($"Unexpected token: {Current}");
     }
 

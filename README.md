@@ -7,6 +7,7 @@ A small SQL parser in C# that turns SQL text into an AST (lexer → tokens → p
 - **SELECT:** `SELECT` column list, `FROM` one table, multiple **JOIN**s with **ON** conditions, optional **WHERE**, **GROUP BY**, **HAVING**, **ORDER BY**, **LIMIT**/OFFSET.
 - **DELETE:** `DELETE FROM` table, optional **WHERE** (same condition style as SELECT).
 - **UPDATE:** `UPDATE` table `SET` col = value [, col = value ...], optional **WHERE** (value: literal, column ref, or parenthesized expression).
+- **INSERT:** `INSERT INTO` table [ `(` col [, col ...] `)` ] `VALUES` `(` value [, value ...] `)` (value: literal, column ref, or parenthesized expression).
 - **Columns:** `*`, `col`, `table.col`, `table.*`, and `AS alias`.
 - **Tables:** Table name, optional `schema.table`, optional table alias.
 - **Joins:** INNER, LEFT, RIGHT, FULL (with optional OUTER), CROSS. ON conditions (except CROSS) support column refs, literals, `=`, `<>`, `AND`, `OR`, and parentheses; AND has higher precedence than OR.
@@ -20,7 +21,7 @@ A small SQL parser in C# that turns SQL text into an AST (lexer → tokens → p
 ## What it doesn’t do (planned)
 
 - **SELECT clauses:** (all main clauses parsed).
-- **Other statements:** INSERT.
+- **Other statements:** (none; SELECT, INSERT, UPDATE, DELETE supported).
 - **Advanced:** subqueries, function calls (e.g. `COUNT(*)`), DISTINCT, TOP, WITH.
 
 See `docs/work_plan.md` for the full design spec and implementation order.

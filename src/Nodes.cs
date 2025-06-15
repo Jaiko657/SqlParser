@@ -134,3 +134,9 @@ public record UpdateSetItem(
     ColumnReferenceNode Column,
     ExpressionNode Value
 ) : Node;
+
+public record InsertNode(
+    TableNode Table,
+    IReadOnlyList<string>? ColumnNames,
+    IReadOnlyList<ExpressionNode> Values
+) : Node;
