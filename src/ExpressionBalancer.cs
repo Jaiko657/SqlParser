@@ -48,6 +48,7 @@ public class ExpressionBalancer
         {
             case BalanceContext.Join:
             case BalanceContext.Where:
+            case BalanceContext.Having:
                 _precedence["="] = 4;
                 break;
             case BalanceContext.Default:
@@ -133,6 +134,12 @@ public static class NodeExtensions
         var balancer = new ExpressionBalancer(BalanceContext.Join);
         return joinNode with { Condition = balancer.Balance(joinNode.Condition) };
     }
+
+    public static HavingNode Balance(this HavingNode havingNode)
+    {
+        var balancer = new ExpressionBalancer(BalanceContext.Having);
+        return havingNode with { Condition = balancer.Balance(havingNode.Condition) };
+    }
 }
 
 public enum BalanceContext
@@ -140,4 +147,5 @@ public enum BalanceContext
     Default,
     Where,
     Join,
+    Having,
 }
